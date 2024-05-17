@@ -87,9 +87,11 @@ class LoginOtpActivity : AppCompatActivity() {
 
             })
         val options = if (isResend) {
+
             builder.setForceResendingToken(resendingToken).build()
-        } else {
             
+        } else {
+
             builder.build()
         }
 
