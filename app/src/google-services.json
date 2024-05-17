@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "715105190138",
+    "project_id": "chat-messenger-3b5ac",
+    "storage_bucket": "chat-messenger-3b5ac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:715105190138:android:8314a86b9b09e5ea524943",
+        "android_client_info": {
+          "package_name": "mynk.ara.chat_messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW8YjwJ-JQlt2ldsxsGaLZqxhH4uNMGA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
