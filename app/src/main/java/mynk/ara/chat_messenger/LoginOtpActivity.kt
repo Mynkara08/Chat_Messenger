@@ -73,7 +73,7 @@ class LoginOtpActivity : AppCompatActivity() {
                 }
 
                 override fun onVerificationFailed(e: FirebaseException) {
-                    AndroidUtil.showToast(this, "OTP verification failed")
+                    AndroidUtil.showToast(applicationContext, "OTP verification failed")
                     setInProgress(false)
 
                 }
@@ -81,23 +81,32 @@ class LoginOtpActivity : AppCompatActivity() {
 
                     verificationCode(verificationId)
                     resendingToken(token)
-                    AndroidUtil.showToast(this, "OTP sent successfully")
+                    AndroidUtil.showToast(applicationContext, "OTP sent successfully")
                     setInProgress(false)
                 }
 
             })
         val options = if (isResend) {
 
-            builder.setForceResendingToken(resendingToken).build()
+            resendingToken?.let { builder.setForceResendingToken(it).build() }
             
         } else {
 
             builder.build()
         }
 
-        PhoneAuthProvider.verifyPhoneNumber(options)
+        if (options != null) {
+            PhoneAuthProvider.verifyPhoneNumber(options)
+        }
 
 
+    }
+
+    private fun resendingToken(token: PhoneAuthProvider.ForceResendingToken) {
+    //Implement Resend Code feature
+    }
+    private fun verificationCode(verificationId:String){
+    // Implement Verification Process
     }
 
 
