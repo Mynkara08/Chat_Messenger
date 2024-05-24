@@ -1,6 +1,7 @@
 
 package mynk.ara.chat_messenger
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -125,16 +126,21 @@ class LoginOtpActivity : AppCompatActivity() {
     }
 
     private fun signIn(phoneAuthCredential: PhoneAuthCredential) {
+        setInProgress(true)
         mAuth.signInWithCredential(phoneAuthCredential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    AndroidUtil.showToast(this, "Sign in successful")
-
+                    setInProgress(false)
+                    val intent = Intent(this@LoginOtpActivity, LoginUsernameActivity::class.java)
+                    intent.putExtra("phone", phoneNumber)
+                    startActivity(intent)
                 } else {
+
                     AndroidUtil.showToast(this, "Sign in failed: ${task.exception?.message}")
                 }
             }
     }
+
 
     private fun startResendTimer() {
         var secondsRemaining = timeoutSeconds
