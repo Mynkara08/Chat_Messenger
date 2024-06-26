@@ -9,6 +9,10 @@ import com.google.firebase.firestore.FirebaseFirestore
         fun currentUserId(): String? {
             return FirebaseAuth.getInstance().uid
         }
+        fun isLoggedIn(): Boolean {
+            return currentUserId() != null
+        }
+
 
         fun currentUserDetails(): DocumentReference {
             val userId = currentUserId()

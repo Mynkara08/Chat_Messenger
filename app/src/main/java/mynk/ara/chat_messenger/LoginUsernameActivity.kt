@@ -14,6 +14,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import mynk.ara.chat_messenger.model.UserModel
+import mynk.ara.chat_messenger.utils.AndroidUtil
 import mynk.ara.chat_messenger.utils.FirebaseUtil
 
 class LoginUsernameActivity : AppCompatActivity() {
@@ -21,7 +22,7 @@ class LoginUsernameActivity : AppCompatActivity() {
     lateinit var letMeInBtn: Button
     lateinit var progressBar: ProgressBar
     var phoneNumber: String = ""
-    lateinit var userModel: UserModel
+    private var userModel: UserModel?=null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,24 +49,22 @@ class LoginUsernameActivity : AppCompatActivity() {
     fun setUsername(){
 
         val username: String = usernameInput.text.toString()
-       if(username.isEmpty() || username.length<3){
-           usernameInput.setError("Username length should be at least 3 chars")
-           return
-       }
+        val data = hashMapOf("username" to username)
+        if(username.isEmpty() || username.length<3){
+            usernameInput.setError("Username length should be at least 3 chars")
+            return
+        }
         setInProgress(true)
         if (userModel != null) {
-            userModel.setUsername(username)
+            userModel!!.setUsername(username)
 
         }else {
             userModel = UserModel(phoneNumber, username, Timestamp.now())
         }
-        FirebaseUtil.currentUserDetails().set(username).addOnCompleteListener { task ->
+        FirebaseUtil.currentUserDetails().set(data).addOnCompleteListener { task ->
             setInProgress(false)
             if (task.isSuccessful) {
-                val intent = Intent(this@LoginUsernameActivity, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                startActivity(intent)
+                moveToHomeScreen()
             }
         }
 
@@ -74,17 +73,21 @@ class LoginUsernameActivity : AppCompatActivity() {
     }
     fun getUsername() {
         setInProgress(true)
-        FirebaseUtil.currentUserDetails().get().addOnCompleteListener { task ->
-            setInProgress(false)
-            if (task.isSuccessful) {
-                userModel = task.result?.toObject(UserModel::class.java)!!
-                if(userModel!=null){
-                    usernameInput.setText(userModel.getUsername())
+        FirebaseUtil.currentUserDetails().get()
+            .addOnSuccessListener {
+                if(it.exists()){
+                    userModel = it.toObject(UserModel::class.java)!!
+                    if(userModel!=null){
+                        moveToHomeScreen()
+                        usernameInput.setText(userModel!!.getUsername())
+                    }
+                }else {
+                    AndroidUtil.showToast(this, "You're not registered yet!!")
                 }
-
+                setInProgress(false)
+            }.addOnFailureListener {
+                setInProgress(false)
             }
-
-        }
     }
 
     private fun setInProgress(inProgress: Boolean) {
@@ -96,5 +99,10 @@ class LoginUsernameActivity : AppCompatActivity() {
             letMeInBtn.visibility = View.VISIBLE
         }
     }
+    private fun moveToHomeScreen(){
+        val intent = Intent(this@LoginUsernameActivity, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+    }
 }
-
