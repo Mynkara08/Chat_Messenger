@@ -2,17 +2,22 @@ package mynk.ara.chat_messenger
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import mynk.ara.chat_messenger.model.UserModel
 import mynk.ara.chat_messenger.utils.AndroidUtil
 import mynk.ara.chat_messenger.utils.FirebaseUtil
@@ -21,14 +26,22 @@ class LoginUsernameActivity : AppCompatActivity() {
     lateinit var usernameInput: EditText
     lateinit var letMeInBtn: Button
     lateinit var progressBar: ProgressBar
+    private lateinit var auth:FirebaseAuth
+    private lateinit var storage: FirebaseStorage
+    private lateinit var db: FirebaseFirestore
     var phoneNumber: String = ""
-    private var userModel: UserModel?=null
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login_username)
+
+        auth = FirebaseAuth.getInstance()
+        storage = FirebaseStorage.getInstance()
+        db = FirebaseFirestore.getInstance()
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -41,54 +54,52 @@ class LoginUsernameActivity : AppCompatActivity() {
         phoneNumber = intent.extras?.getString("phone") ?: ""
         getUsername()
         letMeInBtn.setOnClickListener { v ->
-            setUsername()
+            when (usernameInput.text.toString().length) {
+                0 -> usernameInput.setError("Username is mandatory")
+                in 1..2 -> usernameInput.error = "Username length should be at least 3 chars"
+                else -> setUsername()
+            }
         }
 
 
     }
-    fun setUsername(){
+    private fun setUsername(){
 
         val username: String = usernameInput.text.toString()
-        val data = hashMapOf("username" to username)
-        if(username.isEmpty() || username.length<3){
-            usernameInput.setError("Username length should be at least 3 chars")
-            return
-        }
-        setInProgress(true)
-        if (userModel != null) {
-            userModel!!.setUsername(username)
+        val map = mutableMapOf<String, String>()
+        map["username"] = username
+        map["phone"] = phoneNumber
+        map["createdTimestamp"] = Timestamp.now().toString()
 
-        }else {
-            userModel = UserModel(phoneNumber, username, Timestamp.now())
-        }
-        FirebaseUtil.currentUserDetails().set(data).addOnCompleteListener { task ->
-            setInProgress(false)
-            if (task.isSuccessful) {
-                moveToHomeScreen()
-            }
-        }
-
-
-
-    }
-    fun getUsername() {
-        setInProgress(true)
-        FirebaseUtil.currentUserDetails().get()
+        db.collection("users").document(phoneNumber).set(map)
             .addOnSuccessListener {
-                if(it.exists()){
-                    userModel = it.toObject(UserModel::class.java)!!
-                    if(userModel!=null){
-                        moveToHomeScreen()
-                        usernameInput.setText(userModel!!.getUsername())
-                    }
-                }else {
-                    AndroidUtil.showToast(this, "You're not registered yet!!")
+                moveToHomeScreen()
+                Toast.makeText(this, "Username saved successfully!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to save username: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+    private fun getUsername() {
+        setInProgress(true)
+        db.collection("users").document(phoneNumber).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val username = document.getString("username") ?: ""
+                    usernameInput.setText(username)
+                    moveToHomeScreen()
+                } else {
+                    Toast.makeText(this, "User not found in the database", Toast.LENGTH_SHORT).show()
                 }
-                setInProgress(false)
-            }.addOnFailureListener {
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to retrieve username: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+            .addOnCompleteListener {
                 setInProgress(false)
             }
     }
+
 
     private fun setInProgress(inProgress: Boolean) {
         if (inProgress) {
@@ -99,10 +110,10 @@ class LoginUsernameActivity : AppCompatActivity() {
             letMeInBtn.visibility = View.VISIBLE
         }
     }
+
+
     private fun moveToHomeScreen(){
-        val intent = Intent(this@LoginUsernameActivity, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
     }
 }

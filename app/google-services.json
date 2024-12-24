@@ -1,8 +1,9 @@
 {
   "project_info": {
     "project_number": "715105190138",
+    "firebase_url": "https://chat-messenger-3b5ac-default-rtdb.firebaseio.com",
     "project_id": "chat-messenger-3b5ac",
-    "storage_bucket": "chat-messenger-3b5ac.appspot.com"
+    "storage_bucket": "chat-messenger-3b5ac.firebasestorage.app"
   },
   "client": [
     {
