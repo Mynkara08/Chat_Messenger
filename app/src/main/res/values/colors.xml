@@ -6,4 +6,9 @@
     <color name="white">#FFFFFFFF</color>
     <color name="of_white">#FDFDFD</color>
     <color name="light_gray">#C3C3C3</color>
+    <color name="grey">#B1AEAE</color>
+    <color name="green">#4CAF50</color>
+    <color name="received">#131E2A</color>
+    <color name="buttonClr">#131E2A</color>
+
 </resources>
