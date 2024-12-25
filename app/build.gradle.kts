@@ -8,7 +8,9 @@ plugins {
 android {
     namespace = "mynk.ara.chat_messenger"
     compileSdk = 34
-
+    viewBinding{
+        enable=true
+    }
     defaultConfig {
         applicationId = "mynk.ara.chat_messenger"
         minSdk = 26
@@ -47,6 +49,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.database.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

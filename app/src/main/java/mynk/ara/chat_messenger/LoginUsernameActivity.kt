@@ -15,6 +15,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -29,6 +31,7 @@ class LoginUsernameActivity : AppCompatActivity() {
     private lateinit var auth:FirebaseAuth
     private lateinit var storage: FirebaseStorage
     private lateinit var db: FirebaseFirestore
+    private lateinit var userRef: DatabaseReference
     var phoneNumber: String = ""
 
 
@@ -41,12 +44,14 @@ class LoginUsernameActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         storage = FirebaseStorage.getInstance()
         db = FirebaseFirestore.getInstance()
+        userRef= FirebaseDatabase.getInstance().getReference("users")
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         usernameInput=findViewById(R.id.login_username)
         letMeInBtn=findViewById(R.id.login_let_me_in_btn)
         progressBar=findViewById(R.id.login_progress_bar)
@@ -71,33 +76,45 @@ class LoginUsernameActivity : AppCompatActivity() {
         map["phone"] = phoneNumber
         map["createdTimestamp"] = Timestamp.now().toString()
 
-        db.collection("users").document(phoneNumber).set(map)
+        userRef.child(auth.currentUser?.uid.toString()).setValue(map)
             .addOnSuccessListener {
                 moveToHomeScreen()
-                Toast.makeText(this, "Username saved successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to save username: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Failed to set username", Toast.LENGTH_LONG).show()
             }
     }
     private fun getUsername() {
         setInProgress(true)
-        db.collection("users").document(phoneNumber).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val username = document.getString("username") ?: ""
-                    usernameInput.setText(username)
-                    moveToHomeScreen()
-                } else {
-                    Toast.makeText(this, "User not found in the database", Toast.LENGTH_SHORT).show()
+       fetchUsername { it->
+           if(it!=null){
+               usernameInput.setText(it)
+               moveToHomeScreen()
+           }else{
+               setInProgress(false)
+           }
+       }
+    }
+
+    private fun fetchUsername(callback:(String?)->Unit){
+        userRef.child(auth.currentUser?.uid.toString()).get()
+            .addOnSuccessListener { it->
+                if(it.exists()){
+                    val username = it.child("username").value as? String
+                    callback(username)
+                }else{
+                    callback(null)
                 }
-            }
-            .addOnFailureListener { e ->
+            }.addOnFailureListener { e ->
                 Toast.makeText(this, "Failed to retrieve username: ${e.message}", Toast.LENGTH_LONG).show()
+                callback(null)
             }
             .addOnCompleteListener {
                 setInProgress(false)
+                callback(null)
+
             }
+
     }
 
 
